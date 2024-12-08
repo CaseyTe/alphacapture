@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Mic, MicOff } from "lucide-react";
 import { useMeetingStore } from "../store/useMeetingStore";
 import { generateSummary } from "../utils/openai/summaryService";
+import { generateMeetingScore } from "../utils/openai/meetingScoreService";
+import { MeetingScore } from "./MeetingScore";
 
 export const MeetingRecorder: React.FC = () => {
   const {
@@ -14,15 +16,27 @@ export const MeetingRecorder: React.FC = () => {
     clearTranscript,
     updateSummary,
     updateMeetingTopics,
+    meetingScore,
+    updateMeetingScore,
   } = useMeetingStore();
   const [error, setError] = useState<string | null>(null);
 
   const updateTranscriptSummary = useCallback(async () => {
     if (isRecording && transcript.trim()) {
-      const newSummary = await generateSummary(transcript, meetingTopics);
+      const [newSummary, meetingScore] = await Promise.all([
+        generateSummary(transcript, meetingTopics),
+        generateMeetingScore(transcript, meetingTopics),
+      ]);
       updateSummary(newSummary);
+      updateMeetingScore(meetingScore);
     }
-  }, [isRecording, transcript, meetingTopics, updateSummary]);
+  }, [
+    isRecording,
+    transcript,
+    meetingTopics,
+    updateSummary,
+    updateMeetingScore,
+  ]);
 
   useEffect(() => {
     let summaryInterval: NodeJS.Timeout;
@@ -145,6 +159,8 @@ export const MeetingRecorder: React.FC = () => {
               "Summary will appear here after 30 seconds of recording..."}
           </div>
         </div>
+
+        {meetingScore && <MeetingScore score={meetingScore} />}
       </div>
     </div>
   );

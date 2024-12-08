@@ -1,17 +1,25 @@
 import { create } from "zustand";
 import { transcriptionService } from "../utils/transcription/TranscriptionService";
 
-interface MeetingState {
+export interface MeetingState {
   isRecording: boolean;
   transcript: string;
   summary: string;
   meetingTopics: string;
+  meetingScore: {
+    overall: number;
+    depth: number;
+    topicAdherence: number;
+    pace: number;
+    analysis: string;
+  } | null;
   startRecording: () => Promise<void>;
   stopRecording: () => void;
   appendTranscript: (text: string) => void;
   clearTranscript: () => void;
   updateSummary: (newSummary: string) => void;
   updateMeetingTopics: (topics: string) => void;
+  updateMeetingScore: (score: MeetingState["meetingScore"]) => void;
 }
 
 export const useMeetingStore = create<MeetingState>((set, get) => ({
@@ -19,6 +27,7 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
   transcript: "",
   summary: "",
   meetingTopics: "",
+  meetingScore: null,
 
   startRecording: async () => {
     try {
@@ -59,4 +68,6 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
   updateMeetingTopics: (topics: string) => {
     set({ meetingTopics: topics });
   },
+
+  updateMeetingScore: (score) => set({ meetingScore: score }),
 }));
