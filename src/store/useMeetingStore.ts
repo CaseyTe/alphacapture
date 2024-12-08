@@ -7,6 +7,7 @@ interface MeetingState {
   startRecording: () => Promise<void>;
   stopRecording: () => void;
   appendTranscript: (text: string) => void;
+  clearTranscript: () => void;
 }
 
 export const useMeetingStore = create<MeetingState>((set, get) => ({
@@ -40,5 +41,9 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
     set((state) => ({
       transcript: state.transcript + text,
     }));
+  },
+
+  clearTranscript: () => {
+    set({ transcript: "" });
   },
 }));

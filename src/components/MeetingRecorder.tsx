@@ -3,8 +3,13 @@ import { Mic, MicOff } from "lucide-react";
 import { useMeetingStore } from "../store/useMeetingStore";
 
 export const MeetingRecorder: React.FC = () => {
-  const { isRecording, transcript, startRecording, stopRecording } =
-    useMeetingStore();
+  const {
+    isRecording,
+    transcript,
+    startRecording,
+    stopRecording,
+    clearTranscript,
+  } = useMeetingStore();
   const [error, setError] = useState<string | null>(null);
 
   const handleStartRecording = async () => {
@@ -23,6 +28,7 @@ export const MeetingRecorder: React.FC = () => {
   const handleStopRecording = () => {
     stopRecording();
     downloadTranscript();
+    clearTranscript();
   };
 
   const downloadTranscript = () => {
