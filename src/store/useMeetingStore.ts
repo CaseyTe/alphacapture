@@ -1,5 +1,5 @@
-import { create } from 'zustand';
-import { transcriptionService } from '../utils/transcription/TranscriptionService';
+import { create } from "zustand";
+import { transcriptionService } from "../utils/transcription/TranscriptionService";
 
 interface MeetingState {
   isRecording: boolean;
@@ -11,18 +11,17 @@ interface MeetingState {
 
 export const useMeetingStore = create<MeetingState>((set, get) => ({
   isRecording: false,
-  transcript: '',
-  
+  transcript: "",
+
   startRecording: async () => {
     try {
       if (get().isRecording) {
         return;
       }
-
-      await transcriptionService.startTranscription();
       set({ isRecording: true });
+      await transcriptionService.startTranscription();
     } catch (error) {
-      console.error('Failed to start recording:', error);
+      console.error("Failed to start recording:", error);
       throw error;
     }
   },
@@ -31,13 +30,13 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
     if (!get().isRecording) {
       return;
     }
-    
+
     transcriptionService.stopTranscription();
     set({ isRecording: false });
   },
 
   appendTranscript: (text: string) => {
-    console.log('Appending transcript:', text);
+    console.log("Appending transcript:", text);
     set((state) => ({
       transcript: state.transcript + text,
     }));
