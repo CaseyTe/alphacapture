@@ -5,17 +5,20 @@ interface MeetingState {
   isRecording: boolean;
   transcript: string;
   summary: string;
+  meetingTopics: string;
   startRecording: () => Promise<void>;
   stopRecording: () => void;
   appendTranscript: (text: string) => void;
   clearTranscript: () => void;
   updateSummary: (newSummary: string) => void;
+  updateMeetingTopics: (topics: string) => void;
 }
 
 export const useMeetingStore = create<MeetingState>((set, get) => ({
   isRecording: false,
   transcript: "",
   summary: "",
+  meetingTopics: "",
 
   startRecording: async () => {
     try {
@@ -34,7 +37,6 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
     if (!get().isRecording) {
       return;
     }
-
     transcriptionService.stopTranscription();
     set({ isRecording: false });
   },
@@ -52,5 +54,9 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
 
   updateSummary: (newSummary: string) => {
     set({ summary: newSummary });
+  },
+
+  updateMeetingTopics: (topics: string) => {
+    set({ meetingTopics: topics });
   },
 }));

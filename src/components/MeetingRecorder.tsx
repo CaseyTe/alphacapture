@@ -8,30 +8,30 @@ export const MeetingRecorder: React.FC = () => {
     isRecording,
     transcript,
     summary,
+    meetingTopics,
     startRecording,
     stopRecording,
     clearTranscript,
     updateSummary,
+    updateMeetingTopics,
   } = useMeetingStore();
   const [error, setError] = useState<string | null>(null);
 
   const updateTranscriptSummary = useCallback(async () => {
     if (isRecording && transcript.trim()) {
-      const newSummary = await generateSummary(transcript);
+      const newSummary = await generateSummary(transcript, meetingTopics);
       updateSummary(newSummary);
     }
-  }, [isRecording, transcript, updateSummary]);
+  }, [isRecording, transcript, meetingTopics, updateSummary]);
 
   useEffect(() => {
     let summaryInterval: NodeJS.Timeout;
 
     if (isRecording) {
-      // Initial summary after 30 seconds
       const initialTimeout = setTimeout(() => {
         updateTranscriptSummary();
-      }, 3000);
+      }, 30000);
 
-      // Subsequent summaries every 30 seconds
       summaryInterval = setInterval(() => {
         updateTranscriptSummary();
       }, 3000);
@@ -76,6 +76,29 @@ export const MeetingRecorder: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="flex flex-col items-center space-y-4 mb-8">
+        <div className="w-full max-w-2xl mb-4">
+          <label
+            htmlFor="topics"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
+            Meeting Topics
+          </label>
+          <textarea
+            id="topics"
+            rows={3}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            placeholder="Enter the topics to be discussed in this meeting..."
+            value={meetingTopics}
+            onChange={(e) => updateMeetingTopics(e.target.value)}
+            disabled={isRecording}
+          />
+          {isRecording && (
+            <p className="mt-1 text-sm text-gray-500">
+              Topics cannot be modified during recording
+            </p>
+          )}
+        </div>
+
         <button
           onClick={isRecording ? handleStopRecording : handleStartRecording}
           className={`flex items-center px-6 py-3 rounded-lg font-medium transition-colors ${

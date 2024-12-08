@@ -4,7 +4,10 @@ if (!OPENAI_API_KEY) {
   console.error("OpenAI API key is not set in environment variables");
 }
 
-export const generateSummary = async (transcript: string): Promise<string> => {
+export const generateSummary = async (
+  transcript: string,
+  meetingTopics: string
+): Promise<string> => {
   try {
     if (!OPENAI_API_KEY) {
       throw new Error("OpenAI API key is not configured");
@@ -22,11 +25,13 @@ export const generateSummary = async (transcript: string): Promise<string> => {
           {
             role: "system",
             content:
-              "You are a helpful assistant that summarizes conversations. Provide a brief, clear summary of the key points discussed.",
+              "You are a helpful assistant that summarizes business meetings. Provide an extensive, clear summary of the key points discussed. Also give a list of action items. Make comments on whether the meeting was productive or not and if it stayed on topic.",
           },
           {
             role: "user",
-            content: `Please summarize this conversation:\n\n${transcript}`,
+            content: `Please summarize this conversation and evaluate if it addresses the intended meeting topics.\n\nIntended Meeting Topics:\n${
+              meetingTopics || "No specific topics provided"
+            }\n\nTranscript:\n${transcript}`,
           },
         ],
         max_tokens: 150,
