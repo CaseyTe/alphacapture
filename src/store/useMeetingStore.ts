@@ -4,22 +4,25 @@ import { transcriptionService } from "../utils/transcription/TranscriptionServic
 interface MeetingState {
   isRecording: boolean;
   transcript: string;
+  summary: string;
   startRecording: () => Promise<void>;
   stopRecording: () => void;
   appendTranscript: (text: string) => void;
   clearTranscript: () => void;
+  updateSummary: (newSummary: string) => void;
 }
 
 export const useMeetingStore = create<MeetingState>((set, get) => ({
   isRecording: false,
   transcript: "",
+  summary: "",
 
   startRecording: async () => {
     try {
       if (get().isRecording) {
         return;
       }
-      set({ isRecording: true });
+      set({ isRecording: true, summary: "" });
       await transcriptionService.startTranscription();
     } catch (error) {
       console.error("Failed to start recording:", error);
@@ -44,6 +47,10 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
   },
 
   clearTranscript: () => {
-    set({ transcript: "" });
+    set({ transcript: "", summary: "" });
+  },
+
+  updateSummary: (newSummary: string) => {
+    set({ summary: newSummary });
   },
 }));

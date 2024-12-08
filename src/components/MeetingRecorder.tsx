@@ -1,16 +1,47 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Mic, MicOff } from "lucide-react";
 import { useMeetingStore } from "../store/useMeetingStore";
+import { generateSummary } from "../utils/openai/summaryService";
 
 export const MeetingRecorder: React.FC = () => {
   const {
     isRecording,
     transcript,
+    summary,
     startRecording,
     stopRecording,
     clearTranscript,
+    updateSummary,
   } = useMeetingStore();
   const [error, setError] = useState<string | null>(null);
+
+  const updateTranscriptSummary = useCallback(async () => {
+    if (isRecording && transcript.trim()) {
+      const newSummary = await generateSummary(transcript);
+      updateSummary(newSummary);
+    }
+  }, [isRecording, transcript, updateSummary]);
+
+  useEffect(() => {
+    let summaryInterval: NodeJS.Timeout;
+
+    if (isRecording) {
+      // Initial summary after 30 seconds
+      const initialTimeout = setTimeout(() => {
+        updateTranscriptSummary();
+      }, 3000);
+
+      // Subsequent summaries every 30 seconds
+      summaryInterval = setInterval(() => {
+        updateTranscriptSummary();
+      }, 3000);
+
+      return () => {
+        clearTimeout(initialTimeout);
+        clearInterval(summaryInterval);
+      };
+    }
+  }, [isRecording, updateTranscriptSummary]);
 
   const handleStartRecording = async () => {
     try {
@@ -74,10 +105,22 @@ export const MeetingRecorder: React.FC = () => {
         )}
       </div>
 
-      <div className="bg-white rounded-lg shadow-lg p-6">
-        <h2 className="text-lg font-semibold mb-4 text-gray-800">Transcript</h2>
-        <div className="min-h-[200px] max-h-[400px] overflow-y-auto whitespace-pre-wrap bg-gray-50 p-4 rounded-md text-gray-700">
-          {transcript || "Transcript will appear here..."}
+      <div className="space-y-6">
+        <div className="bg-white rounded-lg shadow-lg p-6">
+          <h2 className="text-lg font-semibold mb-4 text-gray-800">
+            Transcript
+          </h2>
+          <div className="min-h-[200px] max-h-[400px] overflow-y-auto whitespace-pre-wrap bg-gray-50 p-4 rounded-md text-gray-700">
+            {transcript || "Transcript will appear here..."}
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-lg p-6">
+          <h2 className="text-lg font-semibold mb-4 text-gray-800">Summary</h2>
+          <div className="min-h-[100px] max-h-[200px] overflow-y-auto whitespace-pre-wrap bg-gray-50 p-4 rounded-md text-gray-700">
+            {summary ||
+              "Summary will appear here after 30 seconds of recording..."}
+          </div>
         </div>
       </div>
     </div>
