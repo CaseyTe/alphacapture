@@ -41,5 +41,13 @@ export const createTranscriptionCommand = (audioStream: AsyncIterable<any>): Sta
     EnableChannelIdentification: false
   };
 
+  console.log('Creating transcription command with config:', {
+    LanguageCode: input.LanguageCode,
+    MediaEncoding: input.MediaEncoding,
+    MediaSampleRateHertz: input.MediaSampleRateHertz,
+    EnablePartialResultsStabilization: input.EnablePartialResultsStabilization,
+    PartialResultsStability: input.PartialResultsStability
+  });
+
   return new StartStreamTranscriptionCommand(input);
 };

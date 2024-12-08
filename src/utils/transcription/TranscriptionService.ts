@@ -65,23 +65,42 @@ class TranscriptionService {
 
         console.log('Starting transcription stream...');
         const command = createTranscriptionCommand(this.createAudioStream());
+        console.log('Sending transcription command to AWS...');
         const response = await this.transcribeClient.startTranscription(command);
 
         if (!response.TranscriptResultStream) {
-          throw new Error('No transcript stream received');
+          throw new Error('No transcript stream received from AWS');
         }
 
         this.startDebugInterval();
 
         console.log('Processing transcription stream...');
-        for await (const transcription of this.transcribeClient.processTranscriptStream(response.TranscriptResultStream)) {
-          if (!this.isTranscribing) break;
-          
-          console.log('Raw transcription event:', transcription);
-          if (!transcription.isPartial) {
-            console.log('Received transcription:', transcription.text);
-            useMeetingStore.getState().appendTranscript(transcription.text + ' ');
+        try {
+          for await (const event of response.TranscriptResultStream) {
+            if (!this.isTranscribing) break;
+            
+            console.log('Received event from AWS:', event);
+            
+            if (event.TranscriptEvent?.Transcript?.Results?.[0]) {
+              const result = event.TranscriptEvent.Transcript.Results[0];
+              if (result.Alternatives?.[0]?.Transcript) {
+                const transcription = result.Alternatives[0].Transcript;
+                if (!result.IsPartial) {
+                  console.log('Received final transcription:', transcription);
+                  useMeetingStore.getState().appendTranscript(transcription + ' ');
+                } else {
+                  console.log('Received partial transcription:', transcription);
+                }
+              }
+            }
           }
+        } catch (error) {
+          console.error('Error processing transcription stream:', error);
+          if (error instanceof Error) {
+            console.error('Error details:', error.message);
+            console.error('Error stack:', error.stack);
+          }
+          throw error;
         }
       } finally {
         URL.revokeObjectURL(workletUrl);
@@ -94,10 +113,12 @@ class TranscriptionService {
   }
 
   private async *createAudioStream() {
+    const minChunksToProcess = 5;  // Process at least 5 chunks at once
+    
     while (this.isTranscribing) {
-      if (this.audioBuffer.length > 0) {
+      if (this.audioBuffer.length >= minChunksToProcess) {
         // Process multiple chunks at once for efficiency
-        const chunks = this.audioBuffer.splice(0, Math.min(5, this.audioBuffer.length));
+        const chunks = this.audioBuffer.splice(0, this.audioBuffer.length);
         const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
         const combinedChunk = new Float32Array(totalLength);
         
@@ -109,8 +130,8 @@ class TranscriptionService {
 
         // Process the combined chunk
         const processedChunk = this.audioProcessor.processAudioChunk(combinedChunk);
+        console.log('Sending processed audio chunk of size:', processedChunk.length);
         
-        // Send the processed audio data
         yield {
           AudioEvent: {
             AudioChunk: processedChunk
@@ -118,8 +139,8 @@ class TranscriptionService {
         };
       }
       
-      // Small delay to prevent tight loop
-      await new Promise(resolve => setTimeout(resolve, 20));
+      // Smaller delay to be more responsive
+      await new Promise(resolve => setTimeout(resolve, 10));
     }
   }
 

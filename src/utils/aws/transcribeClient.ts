@@ -8,12 +8,27 @@ export class TranscribeClient {
   private client: TranscribeStreamingClient | null = null;
 
   async initialize(region: string, credentials: { accessKeyId: string; secretAccessKey: string }) {
+    console.log('Initializing AWS Transcribe client with region:', region);
+    console.log('AWS credentials present:', {
+      hasAccessKey: !!credentials.accessKeyId,
+      hasSecretKey: !!credentials.secretAccessKey
+    });
+    
     this.client = new TranscribeStreamingClient({
       region,
       credentials,
       maxAttempts: 3
     });
-    return this.client;
+
+    try {
+      // Test the client configuration
+      const clientConfig = await this.client.config.credentials();
+      console.log('AWS client credentials loaded successfully');
+      return this.client;
+    } catch (error) {
+      console.error('Error initializing AWS client:', error);
+      throw error;
+    }
   }
 
   async startTranscription(command: StartStreamTranscriptionCommand) {
