@@ -9,7 +9,7 @@ export const Navbar: React.FC = () => {
           <div className="flex items-center">
             <Mic className="h-8 w-8 text-indigo-600" />
             <span className="ml-2 text-xl font-semibold text-gray-900">
-              Simple Transcription App
+              AlphaBALLLLLL
             </span>
           </div>
         </div>
