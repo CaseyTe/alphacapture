@@ -1,7 +1,12 @@
 import { create } from "zustand";
 import { transcriptionService } from "../utils/transcription/TranscriptionService";
+import { TranscriptService } from "../services/transcript/transcriptService";
+import { v4 as uuidv4 } from 'uuid';
+import type { SearchResult } from "../services/transcript/types";
 
-export interface MeetingState {
+const transcriptService = new TranscriptService();
+
+interface MeetingState {
   isRecording: boolean;
   transcript: string;
   summary: string;
@@ -13,6 +18,8 @@ export interface MeetingState {
     pace: number;
     analysis: string;
   } | null;
+  searchQuery: string;
+  searchResults: SearchResult[];
   startRecording: () => Promise<void>;
   stopRecording: () => void;
   appendTranscript: (text: string) => void;
@@ -20,6 +27,8 @@ export interface MeetingState {
   updateSummary: (newSummary: string) => void;
   updateMeetingTopics: (topics: string) => void;
   updateMeetingScore: (score: MeetingState["meetingScore"]) => void;
+  searchTranscripts: (query: string) => Promise<void>;
+  saveMeeting: () => Promise<void>;
 }
 
 export const useMeetingStore = create<MeetingState>((set, get) => ({
@@ -28,12 +37,12 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
   summary: "",
   meetingTopics: "",
   meetingScore: null,
+  searchQuery: "",
+  searchResults: [],
 
   startRecording: async () => {
     try {
-      if (get().isRecording) {
-        return;
-      }
+      if (get().isRecording) return;
       set({ isRecording: true, summary: "" });
       await transcriptionService.startTranscription();
     } catch (error) {
@@ -43,15 +52,12 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
   },
 
   stopRecording: () => {
-    if (!get().isRecording) {
-      return;
-    }
+    if (!get().isRecording) return;
     transcriptionService.stopTranscription();
     set({ isRecording: false });
   },
 
   appendTranscript: (text: string) => {
-    console.log("Appending transcript:", text);
     set((state) => ({
       transcript: state.transcript + text,
     }));
@@ -70,4 +76,26 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
   },
 
   updateMeetingScore: (score) => set({ meetingScore: score }),
+
+  searchTranscripts: async (query: string) => {
+    try {
+      const results = await transcriptService.searchTranscripts(query);
+      set({ searchQuery: query, searchResults: results });
+    } catch (error) {
+      console.error('Error searching transcripts:', error);
+      throw error;
+    }
+  },
+
+  saveMeeting: async () => {
+    try {
+      const { transcript, summary } = get();
+      const meetingId = uuidv4();
+      await transcriptService.storeTranscript(meetingId, transcript, summary);
+      return meetingId;
+    } catch (error) {
+      console.error('Error saving meeting:', error);
+      throw error;
+    }
+  },
 }));

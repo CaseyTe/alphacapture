@@ -12,7 +12,9 @@
   "dependencies": {
     "@aws-sdk/client-transcribe-streaming": "^3.600.0",
     "@aws-sdk/credential-providers": "^3.600.0",
+    "@supabase/supabase-js": "^2.39.7",
     "lucide-react": "^0.344.0",
+    "openai": "^4.28.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "zod": "^3.23.8",

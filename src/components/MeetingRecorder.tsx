@@ -1,166 +1,110 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { Mic, MicOff } from "lucide-react";
+import React, { useState } from "react";
+import { Mic, MicOff, Save } from "lucide-react";
 import { useMeetingStore } from "../store/useMeetingStore";
-import { generateSummary } from "../utils/openai/summaryService";
-import { generateMeetingScore } from "../utils/openai/meetingScoreService";
 import { MeetingScore } from "./MeetingScore";
+import { SearchTranscripts } from "./SearchTranscripts";
+import { ConfigurationWarning } from "./ConfigurationWarning";
+import { env } from "../config/env";
+import { TopicsInput } from "./TopicsInput";
+import { TranscriptDisplay } from "./TranscriptDisplay";
+import { SummaryDisplay } from "./SummaryDisplay";
 
 export const MeetingRecorder: React.FC = () => {
   const {
     isRecording,
     transcript,
-    summary,
-    meetingTopics,
+    meetingScore,
     startRecording,
     stopRecording,
-    clearTranscript,
-    updateSummary,
-    updateMeetingTopics,
-    meetingScore,
-    updateMeetingScore,
+    saveMeeting
   } = useMeetingStore();
-  const [error, setError] = useState<string | null>(null);
+  
+  const [isSaving, setIsSaving] = useState(false);
 
-  const updateTranscriptSummary = useCallback(async () => {
-    if (isRecording && transcript.trim()) {
-      const [newSummary, meetingScore] = await Promise.all([
-        generateSummary(transcript, meetingTopics),
-        generateMeetingScore(transcript, meetingTopics),
-      ]);
-      updateSummary(newSummary);
-      updateMeetingScore(meetingScore);
-    }
-  }, [
-    isRecording,
-    transcript,
-    meetingTopics,
-    updateSummary,
-    updateMeetingScore,
-  ]);
+  const canRecord = !!env.VITE_AWS_REGION && 
+                   !!env.VITE_AWS_ACCESS_KEY_ID && 
+                   !!env.VITE_AWS_SECRET_ACCESS_KEY;
 
-  useEffect(() => {
-    let summaryInterval: NodeJS.Timeout;
-
-    if (isRecording) {
-      const initialTimeout = setTimeout(() => {
-        updateTranscriptSummary();
-      }, 30000);
-
-      summaryInterval = setInterval(() => {
-        updateTranscriptSummary();
-      }, 3000);
-
-      return () => {
-        clearTimeout(initialTimeout);
-        clearInterval(summaryInterval);
-      };
-    }
-  }, [isRecording, updateTranscriptSummary]);
+  const canSave = !!env.VITE_SUPABASE_URL && 
+                 !!env.VITE_SUPABASE_ANON_KEY && 
+                 !!env.VITE_OPENAI_API_KEY;
 
   const handleStartRecording = async () => {
     try {
-      setError(null);
       await startRecording();
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error
-          ? err.message
-          : "Failed to start recording. Please check your microphone access and try again.";
-      setError(errorMessage);
+    } catch (error) {
+      console.error("Failed to start recording:", error);
+      // TODO: Add error toast notification
     }
   };
 
   const handleStopRecording = () => {
     stopRecording();
-    downloadTranscript();
-    clearTranscript();
   };
 
-  const downloadTranscript = () => {
-    const element = document.createElement("a");
-    const file = new Blob([transcript], { type: "text/plain" });
-    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-    element.href = URL.createObjectURL(file);
-    element.download = `transcript-${timestamp}.txt`;
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
+  const handleSaveMeeting = async () => {
+    try {
+      setIsSaving(true);
+      await saveMeeting();
+      // TODO: Add success toast notification
+    } catch (error) {
+      console.error("Failed to save meeting:", error);
+      // TODO: Add error toast notification
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
+    <div className="max-w-4xl mx-auto p-6 space-y-8">
+      <ConfigurationWarning />
+      
       <div className="flex flex-col items-center space-y-4 mb-8">
-        <div className="w-full max-w-2xl mb-4">
-          <label
-            htmlFor="topics"
-            className="block text-sm font-medium text-gray-700 mb-2"
+        <TopicsInput disabled={isRecording} />
+
+        <div className="flex gap-4">
+          <button
+            onClick={isRecording ? handleStopRecording : handleStartRecording}
+            disabled={!canRecord}
+            className={`flex items-center px-6 py-3 rounded-lg font-medium transition-colors ${
+              isRecording
+                ? "bg-red-600 hover:bg-red-700 text-white"
+                : "bg-indigo-600 hover:bg-indigo-700 text-white"
+            } disabled:opacity-50 disabled:cursor-not-allowed`}
+            title={!canRecord ? "AWS configuration required for recording" : undefined}
           >
-            Meeting Topics
-          </label>
-          <textarea
-            id="topics"
-            rows={3}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-            placeholder="Enter the topics to be discussed in this meeting..."
-            value={meetingTopics}
-            onChange={(e) => updateMeetingTopics(e.target.value)}
-            disabled={isRecording}
-          />
-          {isRecording && (
-            <p className="mt-1 text-sm text-gray-500">
-              Topics cannot be modified during recording
-            </p>
+            {isRecording ? (
+              <>
+                <MicOff className="w-5 h-5 mr-2" />
+                Stop Recording
+              </>
+            ) : (
+              <>
+                <Mic className="w-5 h-5 mr-2" />
+                Start Recording
+              </>
+            )}
+          </button>
+
+          {!isRecording && transcript && (
+            <button
+              onClick={handleSaveMeeting}
+              disabled={isSaving || !canSave}
+              className="flex items-center px-6 py-3 rounded-lg font-medium bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              title={!canSave ? "Supabase and OpenAI configuration required for saving" : undefined}
+            >
+              <Save className="w-5 h-5 mr-2" />
+              {isSaving ? 'Saving...' : 'Save Meeting'}
+            </button>
           )}
         </div>
-
-        <button
-          onClick={isRecording ? handleStopRecording : handleStartRecording}
-          className={`flex items-center px-6 py-3 rounded-lg font-medium transition-colors ${
-            isRecording
-              ? "bg-red-600 hover:bg-red-700 text-white"
-              : "bg-indigo-600 hover:bg-indigo-700 text-white"
-          }`}
-        >
-          {isRecording ? (
-            <>
-              <MicOff className="w-5 h-5 mr-2" />
-              Stop Recording
-            </>
-          ) : (
-            <>
-              <Mic className="w-5 h-5 mr-2" />
-              Start Recording
-            </>
-          )}
-        </button>
-
-        {error && (
-          <div className="text-red-600 text-sm bg-red-50 p-4 rounded-lg w-full max-w-md border border-red-200">
-            <p className="font-medium">Error</p>
-            <p>{error}</p>
-          </div>
-        )}
       </div>
 
       <div className="space-y-6">
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <h2 className="text-lg font-semibold mb-4 text-gray-800">
-            Transcript
-          </h2>
-          <div className="min-h-[200px] max-h-[400px] overflow-y-auto whitespace-pre-wrap bg-gray-50 p-4 rounded-md text-gray-700">
-            {transcript || "Transcript will appear here..."}
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <h2 className="text-lg font-semibold mb-4 text-gray-800">Summary</h2>
-          <div className="min-h-[100px] max-h-[200px] overflow-y-auto whitespace-pre-wrap bg-gray-50 p-4 rounded-md text-gray-700">
-            {summary ||
-              "Summary will appear here after 30 seconds of recording..."}
-          </div>
-        </div>
-
+        <TranscriptDisplay />
+        <SummaryDisplay />
         {meetingScore && <MeetingScore score={meetingScore} />}
+        <SearchTranscripts />
       </div>
     </div>
   );
