@@ -1,43 +1,45 @@
-import React, { useState, useRef } from 'react';
-import { Tag, Plus } from 'lucide-react';
-import { TopicTag } from './TopicTag';
-import { useMeetingStore } from '../../store/useMeetingStore';
+import React, { useState, useRef } from "react";
+import { Tag, Plus } from "lucide-react";
+import { TopicTag } from "./TopicTag";
+import { useMeetingStore } from "../../store/useMeetingStore";
 
 interface TopicsInputProps {
   disabled?: boolean;
 }
 
 export const TopicsInput: React.FC<TopicsInputProps> = ({ disabled }) => {
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState("");
   const [topics, setTopics] = useState<string[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
-  const updateMeetingTopics = useMeetingStore(state => state.updateMeetingTopics);
+  const updateMeetingTopics = useMeetingStore(
+    (state) => state.updateMeetingTopics
+  );
 
   const handleAddTopic = (topic: string) => {
     const trimmedTopic = topic.trim();
     if (trimmedTopic && !topics.includes(trimmedTopic)) {
       const newTopics = [...topics, trimmedTopic];
       setTopics(newTopics);
-      setInputValue('');
-      updateMeetingTopics(newTopics.join('\n'));
+      setInputValue("");
+      updateMeetingTopics(newTopics.join("\n"));
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && inputValue.trim()) {
+    if (e.key === "Enter" && inputValue.trim()) {
       e.preventDefault();
       handleAddTopic(inputValue);
-    } else if (e.key === 'Backspace' && !inputValue && topics.length > 0) {
+    } else if (e.key === "Backspace" && !inputValue && topics.length > 0) {
       const newTopics = topics.slice(0, -1);
       setTopics(newTopics);
-      updateMeetingTopics(newTopics.join('\n'));
+      updateMeetingTopics(newTopics.join("\n"));
     }
   };
 
   const handleRemoveTopic = (indexToRemove: number) => {
     const newTopics = topics.filter((_, index) => index !== indexToRemove);
     setTopics(newTopics);
-    updateMeetingTopics(newTopics.join('\n'));
+    updateMeetingTopics(newTopics.join("\n"));
   };
 
   return (
@@ -54,7 +56,11 @@ export const TopicsInput: React.FC<TopicsInputProps> = ({ disabled }) => {
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
             disabled={disabled}
-            placeholder={disabled ? "Topics cannot be modified during recording" : "Add meeting topics..."}
+            placeholder={
+              disabled
+                ? "Topics cannot be modified during recording"
+                : "Add meeting topics..."
+            }
             className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm
               focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500
               placeholder:text-gray-400 disabled:bg-gray-50 disabled:cursor-not-allowed"
@@ -84,7 +90,7 @@ export const TopicsInput: React.FC<TopicsInputProps> = ({ disabled }) => {
         ))}
         {topics.length === 0 && (
           <p className="text-sm text-gray-500 italic">
-            No topics added yet. Type a topic and press Enter to add it.
+            No topics added yet. Type a topic and press
           </p>
         )}
       </div>

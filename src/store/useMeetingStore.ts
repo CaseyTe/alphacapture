@@ -6,7 +6,7 @@ import type { SearchResult } from "../services/transcript/types";
 
 const transcriptService = new TranscriptService();
 
-interface MeetingState {
+export interface MeetingState {
   isRecording: boolean;
   isPaused: boolean;
   transcript: string;

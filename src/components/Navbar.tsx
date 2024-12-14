@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "../utils/supabase/client";
-import { LogIn, User, Search } from "lucide-react";
-import { UserMenu } from "./navigation/UserMenu";
+import { LogIn, LogOut, User } from "lucide-react";
+import { SearchHeader } from "./SearchHeader";
 
 export const Navbar: React.FC = () => {
   const [user, setUser] = useState<any>(null);
-  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     // Fetch the current user on component mount
@@ -47,12 +46,6 @@ export const Navbar: React.FC = () => {
     }
   };
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Implement search functionality here
-    console.log("Searching for:", searchQuery);
-  };
-
   return (
     <nav className="bg-white shadow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -64,21 +57,18 @@ export const Navbar: React.FC = () => {
             </span>
           </div>
           <div className="flex-1 flex items-center justify-center">
-            <form onSubmit={handleSearch}>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search meetings..."
-                  className="w-64 px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                />
-                <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-              </div>
-            </form>
+            <SearchHeader />
           </div>
           <div className="flex items-center">
-            {!user && (
+            {user ? (
+              <button
+                onClick={handleLogout}
+                className="flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors"
+              >
+                <LogOut className="w-5 h-5 mr-2" />
+                Logout
+              </button>
+            ) : (
               <button
                 onClick={handleLogin}
                 className="flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors"

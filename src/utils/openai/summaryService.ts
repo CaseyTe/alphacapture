@@ -4,16 +4,25 @@ if (!OPENAI_API_KEY) {
   console.error("OpenAI API key is not set in environment variables");
 }
 
+interface MeetingSummaryResponse {
+  summary: string;
+  score: {
+    overall: number;
+    depth: number;
+    topicAdherence: number;
+    pace: number;
+    analysis: string;
+  };
+}
+
 export const generateSummary = async (
   transcript: string,
   meetingTopics: string
-): Promise<string> => {
+): Promise<MeetingSummaryResponse> => {
   try {
     if (!OPENAI_API_KEY) {
       throw new Error("OpenAI API key is not configured");
     }
-
-    console.log("Generating summary HELLOOOOOOOO");
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -27,30 +36,66 @@ export const generateSummary = async (
           {
             role: "system",
             content:
-              "You are a helpful assistant that summarizes business meetings. Provide an extensive, clear summary of the key points discussed. Also give a list of action items. Make comments on whether the meeting was productive or not and if it stayed on topic.",
+              "You are a helpful assistant that analyzes business meetings. Provide a summary and scoring analysis.",
           },
           {
             role: "user",
-            content: `Please summarize this conversation and evaluate if it addresses the intended meeting topics.\n\nIntended Meeting Topics:\n${
+            content: `Analyze this meeting and provide: 1) A summary of key points and action items, and 2) Numerical scores (0-10) for overall quality, discussion depth, topic adherence, and meeting pace.\n\nIntended Topics:\n${
               meetingTopics || "No specific topics provided"
             }\n\nTranscript:\n${transcript}`,
           },
         ],
-        max_tokens: 150,
-        temperature: 0.7,
+        functions: [
+          {
+            name: "analyze_meeting",
+            parameters: {
+              type: "object",
+              properties: {
+                summary: { type: "string" },
+                score: {
+                  type: "object",
+                  properties: {
+                    overall: { type: "number" },
+                    depth: { type: "number" },
+                    topicAdherence: { type: "number" },
+                    pace: { type: "number" },
+                    analysis: { type: "string" },
+                  },
+                  required: [
+                    "overall",
+                    "depth",
+                    "topicAdherence",
+                    "pace",
+                    "analysis",
+                  ],
+                },
+              },
+              required: ["summary", "score"],
+            },
+          },
+        ],
+        function_call: { name: "analyze_meeting" },
       }),
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error("OpenAI API error:", errorData);
       throw new Error(`Failed to generate summary: ${response.statusText}`);
     }
 
     const data = await response.json();
-    return data.choices[0].message.content.trim();
+    return JSON.parse(data.choices[0].message.function_call.arguments);
   } catch (error) {
     console.error("Error generating summary:", error);
-    return "Failed to generate summary. Please check your API key configuration.";
+    return {
+      summary:
+        "Failed to generate summary. Please check your API key configuration.",
+      score: {
+        overall: 0,
+        depth: 0,
+        topicAdherence: 0,
+        pace: 0,
+        analysis: "Failed to analyze meeting.",
+      },
+    };
   }
 };

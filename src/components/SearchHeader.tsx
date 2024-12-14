@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import { Search } from 'lucide-react';
-import { useMeetingStore } from '../../store/useMeetingStore';
-import { useSearchPlaceholders } from '../../hooks/useSearchPlaceholders';
+import React, { useState } from "react";
+import { Search } from "lucide-react";
+import { useMeetingStore } from "../store/useMeetingStore";
+import { useSearchPlaceholders } from "../hooks/useSearchPlaceholders";
 
 export const SearchHeader: React.FC = () => {
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const { searchTranscripts } = useMeetingStore();
   const { text: placeholder, opacity } = useSearchPlaceholders();
@@ -39,11 +39,11 @@ export const SearchHeader: React.FC = () => {
             spellCheck="false"
           />
           {!isFocused && !query && (
-            <div 
+            <div
               className="absolute inset-y-0 left-10 flex items-center pointer-events-none text-gray-400"
-              style={{ 
-                transition: 'opacity 1s ease-in-out',
-                opacity 
+              style={{
+                transition: "opacity 1s ease-in-out",
+                opacity,
               }}
             >
               <span>{placeholder}</span>

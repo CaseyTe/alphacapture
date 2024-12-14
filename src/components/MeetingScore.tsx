@@ -24,8 +24,10 @@ const ScoreIndicator: React.FC<ScoreProps> = ({ label, score }) => (
 );
 
 export const MeetingScore: React.FC<{
-  score: NonNullable<MeetingState["meetingScore"]>;
+  score: MeetingState["meetingScore"];
 }> = ({ score }) => {
+  if (!score) return null;
+
   return (
     <div className="bg-white rounded-lg shadow-lg p-6">
       <h2 className="text-lg font-semibold mb-4 text-gray-800">

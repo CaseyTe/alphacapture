@@ -3,8 +3,13 @@ import { useMeetingStore } from "../store/useMeetingStore";
 import { generateSummary } from "../utils/openai/summaryService";
 
 export const useAutoSummary = () => {
-  const { transcript, meetingTopics, updateSummary, isRecording } =
-    useMeetingStore();
+  const {
+    transcript,
+    meetingTopics,
+    updateSummary,
+    updateMeetingScore,
+    isRecording,
+  } = useMeetingStore();
 
   useEffect(() => {
     console.log("useAutoSummary effect running", {
@@ -17,9 +22,10 @@ export const useAutoSummary = () => {
     const intervalId = setInterval(async () => {
       console.log("Generating new summary..."); // Debug log
       try {
-        const newSummary = await generateSummary(transcript, meetingTopics);
-        console.log("New summary generated:", newSummary); // Debug log
-        updateSummary(newSummary);
+        const result = await generateSummary(transcript, meetingTopics);
+        console.log("New summary generated:", result.summary); // Debug log
+        updateSummary(result.summary);
+        updateMeetingScore(result.score);
       } catch (error) {
         console.error("Error generating summary:", error);
       }
@@ -29,5 +35,11 @@ export const useAutoSummary = () => {
       console.log("Cleaning up summary interval"); // Debug log
       clearInterval(intervalId);
     };
-  }, [isRecording]);
+  }, [
+    isRecording,
+    transcript,
+    meetingTopics,
+    updateSummary,
+    updateMeetingScore,
+  ]);
 };
