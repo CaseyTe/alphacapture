@@ -12,7 +12,7 @@ export const useAutoSummary = () => {
       hasTranscript: !!transcript,
     });
 
-    if (!isRecording || !transcript) return;
+    if (!isRecording) return;
 
     const intervalId = setInterval(async () => {
       console.log("Generating new summary..."); // Debug log
