@@ -16,11 +16,10 @@ export const MeetingNameInput: React.FC = () => {
             type="text"
             value={meetingName}
             onChange={(e) => updateMeetingName(e.target.value)}
-            disabled={isRecording}
             placeholder="Enter meeting name..."
             className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm
               focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500
-              placeholder:text-gray-400 disabled:bg-gray-50 disabled:cursor-not-allowed"
+              placeholder:text-gray-400"
           />
         </div>
       </div>

@@ -5,7 +5,7 @@ export const TranscriptDisplay: React.FC = () => {
   const { transcript } = useMeetingStore();
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6">
+    <div className="bg-white rounded-lg p-6">
       <h2 className="text-lg font-semibold mb-4 text-gray-800">
         Live Transcript
       </h2>

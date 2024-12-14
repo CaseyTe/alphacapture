@@ -6,7 +6,7 @@ import { useSearchPlaceholders } from "../hooks/useSearchPlaceholders";
 export const SearchHeader: React.FC = () => {
   const [query, setQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
-  const { searchTranscripts } = useMeetingStore();
+  const { searchTranscripts, userId } = useMeetingStore();
   const { text: placeholder, opacity } = useSearchPlaceholders();
 
   const handleSearch = async (e: React.FormEvent) => {
@@ -25,6 +25,7 @@ export const SearchHeader: React.FC = () => {
           <input
             type="text"
             value={query}
+            disabled={userId === null}
             onChange={(e) => setQuery(e.target.value)}
             onFocus={() => setIsFocused(true)}
             onBlur={() => {
@@ -34,7 +35,7 @@ export const SearchHeader: React.FC = () => {
             }}
             className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm
               focus:outline-none focus:border-indigo-500 focus:ring-0
-              hover:border-gray-400"
+              hover:border-gray-400 disabled:bg-gray-50 disabled:cursor-not-allowed"
             autoComplete="off"
             spellCheck="false"
           />
@@ -42,11 +43,11 @@ export const SearchHeader: React.FC = () => {
             <div
               className="absolute inset-y-0 left-10 flex items-center pointer-events-none text-gray-400"
               style={{
-                transition: "opacity 1s ease-in-out",
+                transition: userId ? "opacity 1s ease-in-out" : "none",
                 opacity,
               }}
             >
-              <span>{placeholder}</span>
+              <span>{userId ? placeholder : "Login to search"}</span>
             </div>
           )}
         </div>
