@@ -77,7 +77,7 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
       return;
     }
     transcriptionService.stopTranscription();
-    set({ isPaused: true });
+    set({ isRecording: false, isPaused: true });
     console.log("Recording paused.");
   },
 
@@ -87,7 +87,7 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
       return;
     }
     transcriptionService.startTranscription();
-    set({ isPaused: false });
+    set({ isRecording: true, isPaused: false });
     console.log("Recording resumed.");
   },
 

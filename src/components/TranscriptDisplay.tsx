@@ -1,5 +1,5 @@
-import React from 'react';
-import { useMeetingStore } from '../store/useMeetingStore';
+import React from "react";
+import { useMeetingStore } from "../store/useMeetingStore";
 
 export const TranscriptDisplay: React.FC = () => {
   const { transcript } = useMeetingStore();
@@ -16,4 +16,4 @@ export const TranscriptDisplay: React.FC = () => {
       </div>
     </div>
   );
-}
+};
