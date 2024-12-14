@@ -1,18 +1,18 @@
 import React from "react";
-import { Mic, Pause, Play, Square, Save } from "lucide-react";
 import { useMeetingStore } from "../store/useMeetingStore";
+import { Mic, Square, Play, Pause } from "lucide-react";
 import { useAutoSummary } from "../hooks/useAutoSummary";
 
 export const RecordingControls: React.FC = () => {
   const {
     isRecording,
     isPaused,
-    transcript,
     startRecording,
     stopRecording,
     pauseRecording,
     resumeRecording,
     saveMeeting,
+    userId,
   } = useMeetingStore();
 
   useAutoSummary();
@@ -47,10 +47,11 @@ export const RecordingControls: React.FC = () => {
     return (
       <button
         onClick={handleStartRecording}
-        className="w-full flex items-center justify-center px-6 py-3 rounded-lg font-medium bg-indigo-600 hover:bg-indigo-700 text-white transition-colors"
+        disabled={!userId}
+        className="w-full flex items-center justify-center px-6 py-3 rounded-lg font-medium bg-indigo-600 hover:bg-indigo-700 text-white transition-colors disabled:cursor-not-allowed"
       >
         <Mic className="w-5 h-5 mr-2" />
-        Start Recording
+        {userId ? "Start Recording" : "Login to Start Recording"}
       </button>
     );
   }

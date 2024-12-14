@@ -12,6 +12,7 @@ export interface MeetingState {
   transcript: string;
   summary: string;
   meetingTopics: string;
+  userId: string | null;
   meetingScore: {
     overall: number;
     depth: number;
@@ -32,6 +33,8 @@ export interface MeetingState {
   updateMeetingScore: (score: MeetingState["meetingScore"]) => void;
   searchTranscripts: (query: string) => Promise<void>;
   saveMeeting: () => Promise<void>;
+  login: (userId: string) => void;
+  logout: () => void;
 }
 
 export const useMeetingStore = create<MeetingState>((set, get) => ({
@@ -39,6 +42,7 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
   isPaused: false,
   transcript: "",
   summary: "",
+  userId: null,
   meetingTopics: "",
   meetingScore: null,
   searchQuery: "",
@@ -77,7 +81,7 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
       return;
     }
     transcriptionService.stopTranscription();
-    set({ isRecording: false, isPaused: true });
+    set({ isPaused: true });
     console.log("Recording paused.");
   },
 
@@ -87,7 +91,7 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
       return;
     }
     transcriptionService.startTranscription();
-    set({ isRecording: true, isPaused: false });
+    set({ isPaused: false });
     console.log("Recording resumed.");
   },
 
@@ -146,4 +150,8 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
       throw error;
     }
   },
+
+  login: (userId: string) => set({ userId }),
+
+  logout: () => set({ userId: null }),
 }));

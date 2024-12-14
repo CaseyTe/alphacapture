@@ -9,15 +9,17 @@ export const useAutoSummary = () => {
     updateSummary,
     updateMeetingScore,
     isRecording,
+    isPaused,
   } = useMeetingStore();
 
   useEffect(() => {
     console.log("useAutoSummary effect running", {
       isRecording,
+      isPaused,
       hasTranscript: !!transcript,
     });
 
-    if (!isRecording) return;
+    if (!isRecording || isPaused) return;
 
     const intervalId = setInterval(async () => {
       console.log("Generating new summary..."); // Debug log
@@ -37,6 +39,7 @@ export const useAutoSummary = () => {
     };
   }, [
     isRecording,
+    isPaused,
     transcript,
     meetingTopics,
     updateSummary,

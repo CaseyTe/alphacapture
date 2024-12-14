@@ -1,35 +1,56 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "../utils/supabase/client";
-import { LogIn, LogOut, User } from "lucide-react";
+import { LogIn, LogOut } from "lucide-react";
 import { SearchHeader } from "./SearchHeader";
+import { useMeetingStore } from "../store/useMeetingStore";
 
 export const Navbar: React.FC = () => {
   const [user, setUser] = useState<any>(null);
+  const { login, logout } = useMeetingStore();
 
   useEffect(() => {
     // Fetch the current user on component mount
-    const currentUser = supabase!.auth.getUser();
-    setUser(currentUser);
+    const fetchUser = async () => {
+      const { data, error } = await supabase!.auth.getUser();
+      if (data.user) {
+        setUser(data.user);
+        login(data.user.id);
+      }
+      if (error) {
+        console.error("Error fetching user:", error);
+      }
+    };
+
+    fetchUser();
 
     // Listen for auth state changes
     const { data: authListener } = supabase!.auth.onAuthStateChange(
       (event, session) => {
-        setUser(session?.user ?? null);
+        if (session?.user) {
+          setUser(session.user);
+          login(session.user.id);
+        } else {
+          setUser(null);
+          logout();
+        }
       }
     );
 
     // Cleanup the listener on unmount
     return () => {
-      authListener?.subscription.unsubscribe();
+      authListener.subscription.unsubscribe();
     };
-  }, []);
+  }, [login, logout]);
 
   const handleLogin = async () => {
     try {
-      const { error } = await supabase!.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
       });
+
       if (error) throw error;
+
+      // No need to set user here; the auth state listener will handle it
     } catch (error) {
       console.error("Error logging in:", error);
       // TODO: Add error toast notification
@@ -40,6 +61,8 @@ export const Navbar: React.FC = () => {
     try {
       const { error } = await supabase!.auth.signOut();
       if (error) throw error;
+
+      // No need to set user here; the auth state listener will handle it
     } catch (error) {
       console.error("Error logging out:", error);
       // TODO: Add error toast notification
@@ -51,7 +74,6 @@ export const Navbar: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex-shrink-0 flex items-center">
-            <User className="h-8 w-8 text-indigo-600" />
             <span className="ml-2 font-bold text-xl text-indigo-600">
               MeetingApp
             </span>

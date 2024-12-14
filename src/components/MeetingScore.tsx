@@ -29,7 +29,7 @@ export const MeetingScore: React.FC<{
   if (!score) return null;
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6">
+    <div className="bg-white rounded-lg p-6">
       <h2 className="text-lg font-semibold mb-4 text-gray-800">
         Meeting Score
       </h2>
