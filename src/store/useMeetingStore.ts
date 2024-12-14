@@ -31,6 +31,12 @@ export interface MeetingState {
   saveMeeting: () => Promise<void>;
   login: (userId: string) => void;
   logout: () => void;
+  notification: { message: string; type: "success" | "error" | "info" } | null;
+  showNotification: (
+    message: string,
+    type: "success" | "error" | "info"
+  ) => void;
+  clearNotification: () => void;
 }
 
 export const useMeetingStore = create<MeetingState>((set, get) => ({
@@ -44,6 +50,7 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
   meetingName: "",
   searchQuery: "",
   searchResults: [],
+  notification: null,
 
   startRecording: async () => {
     try {
@@ -71,9 +78,6 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
     set({
       isRecording: false,
       isPaused: false,
-      transcript: "",
-      summary: "",
-      meetingScore: null,
     });
     console.log("Recording stopped and data cleared.");
   },
@@ -147,7 +151,6 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
     try {
       const { transcript, summary, meetingScore, meetingName } = get();
       const meetingId = uuidv4();
-      // TODO: AWAIT A RESPONSE FROM OPENAI FOR THE FULL SUMMARY BASED ON THE FULL TRANSCRIPT
       await transcriptService.storeTranscript(
         meetingId,
         transcript,
@@ -155,12 +158,12 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
         meetingName,
         meetingScore
       );
-
+      get().showNotification("Meeting saved successfully!", "success");
       set({ transcript: "", summary: "" });
-      console.log("Meeting saved with ID:", meetingId);
       return meetingId;
     } catch (error) {
       console.error("Error saving meeting:", error);
+      get().showNotification("Failed to save meeting", "error");
       throw error;
     }
   },
@@ -168,4 +171,12 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
   login: (userId: string) => set({ userId }),
 
   logout: () => set({ userId: null }),
+
+  showNotification: (message, type) => {
+    set({ notification: { message, type } });
+  },
+
+  clearNotification: () => {
+    set({ notification: null });
+  },
 }));

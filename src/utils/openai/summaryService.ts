@@ -1,3 +1,5 @@
+import { MeetingScore } from "../supabase/types";
+
 const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
 
 if (!OPENAI_API_KEY) {
@@ -6,13 +8,8 @@ if (!OPENAI_API_KEY) {
 
 interface MeetingSummaryResponse {
   summary: string;
-  score: {
-    overall: number;
-    depth: number;
-    topicAdherence: number;
-    pace: number;
-    analysis: string;
-  };
+  analysis: string;
+  score: MeetingScore;
 }
 
 export const generateSummary = async (
@@ -89,12 +86,12 @@ export const generateSummary = async (
     return {
       summary:
         "Failed to generate summary. Please check your API key configuration.",
+      analysis: "Failed to analyze meeting.",
       score: {
         overall: 0,
         depth: 0,
-        topicAdherence: 0,
+        on_topic: 0,
         pace: 0,
-        analysis: "Failed to analyze meeting.",
       },
     };
   }

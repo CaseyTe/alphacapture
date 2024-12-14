@@ -29,3 +29,10 @@ export interface MeetingScore {
   on_topic: number;
   pace: number;
 }
+
+export interface MeetingDocument {
+  meeting_id: string;
+  chunk_text: string;
+  chunk_embedding: number[];
+  chunk_index: number;
+}

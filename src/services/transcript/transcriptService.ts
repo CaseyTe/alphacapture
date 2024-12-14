@@ -6,6 +6,7 @@ import type {
   SearchResult,
   TranscriptMetadata,
   MeetingScore,
+  MeetingDocument,
 } from "../../utils/supabase/types";
 
 export class TranscriptService {
@@ -44,7 +45,7 @@ export class TranscriptService {
         pace: meetingScore?.pace || 0,
       };
 
-      console.log(meetingData);
+      console.log("meeting data", meetingData);
 
       const { error: metadataError } = await supabase!
         .from("meetings")
@@ -55,19 +56,21 @@ export class TranscriptService {
       // Process and store transcript chunks with embeddings
       const chunks = chunkText(transcript, DEFAULT_CHUNK_OPTIONS);
       const chunkPromises = chunks.map(async (chunk, index) => {
-        const embedding = await generateEmbedding(chunk);
-        return {
+        const embedding: number[] = await generateEmbedding(chunk);
+        const data: MeetingDocument = {
           meeting_id: meetingId,
           chunk_text: chunk,
           chunk_embedding: embedding,
           chunk_index: index,
         };
+        console.log("meeting document", data);
+        return data;
       });
 
       const transcriptChunks = await Promise.all(chunkPromises);
 
       const { error: chunksError } = await supabase!
-        .from("transcript_chunks")
+        .from("meeting_documents")
         .insert(transcriptChunks);
 
       if (chunksError) throw chunksError;

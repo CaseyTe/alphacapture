@@ -5,7 +5,12 @@ import { TranscriptDisplay } from "./components/TranscriptDisplay";
 import { SummaryDisplay } from "./components/SummaryDisplay";
 import { RecordingControls } from "./components/RecordingControls";
 import { MeetingNameInput } from "./components/MeetingName";
+import { Notification } from "./components/Notification";
+import { useMeetingStore } from "./store/useMeetingStore";
+
 function App() {
+  const { notification, clearNotification } = useMeetingStore();
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -25,6 +30,13 @@ function App() {
           </div>
         </div>
       </main>
+      {notification && (
+        <Notification
+          message={notification.message}
+          type={notification.type}
+          onClose={clearNotification}
+        />
+      )}
     </div>
   );
 }
