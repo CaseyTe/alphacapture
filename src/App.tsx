@@ -4,7 +4,7 @@ import { TopicsInput } from "./components/topics/TopicsInput";
 import { TranscriptDisplay } from "./components/TranscriptDisplay";
 import { SummaryDisplay } from "./components/SummaryDisplay";
 import { RecordingControls } from "./components/RecordingControls";
-
+import { MeetingNameInput } from "./components/MeetingName";
 function App() {
   return (
     <div className="min-h-screen bg-gray-50">
@@ -13,6 +13,7 @@ function App() {
         <div className="flex gap-6">
           {/* Left Column */}
           <div className="w-[500px] space-y-6">
+            <MeetingNameInput />
             <TopicsInput />
             <TranscriptDisplay />
             <RecordingControls />

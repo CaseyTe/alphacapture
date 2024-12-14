@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { transcriptionService } from "../utils/transcription/TranscriptionService";
 import { TranscriptService } from "../services/transcript/transcriptService";
 import { v4 as uuidv4 } from "uuid";
-import type { SearchResult } from "../services/transcript/types";
+import type { SearchResult, MeetingScore } from "../utils/supabase/types";
 
 const transcriptService = new TranscriptService();
 
@@ -13,13 +13,8 @@ export interface MeetingState {
   summary: string;
   meetingTopics: string;
   userId: string | null;
-  meetingScore: {
-    overall: number;
-    depth: number;
-    topicAdherence: number;
-    pace: number;
-    analysis: string;
-  } | null;
+  meetingScore: MeetingScore | null;
+  meetingName: string;
   searchQuery: string;
   searchResults: SearchResult[];
   startRecording: () => Promise<void>;
@@ -32,6 +27,7 @@ export interface MeetingState {
   updateMeetingTopics: (topics: string) => void;
   updateMeetingScore: (score: MeetingState["meetingScore"]) => void;
   searchTranscripts: (query: string) => Promise<void>;
+  updateMeetingName: (name: string) => void;
   saveMeeting: () => Promise<void>;
   login: (userId: string) => void;
   logout: () => void;
@@ -45,6 +41,7 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
   userId: null,
   meetingTopics: "",
   meetingScore: null,
+  meetingName: "",
   searchQuery: "",
   searchResults: [],
 
@@ -107,6 +104,11 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
     );
   },
 
+  updateMeetingName: (name: string) => {
+    set({ meetingName: name });
+    console.log("Meeting name updated.");
+  },
+
   clearTranscript: () => {
     set({ transcript: "", summary: "" });
     console.log("Transcript and summary cleared.");
@@ -137,10 +139,16 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
 
   saveMeeting: async () => {
     try {
-      const { transcript, summary } = get();
+      const { transcript, summary, meetingScore, meetingName } = get();
       const meetingId = uuidv4();
       // TODO: AWAIT A RESPONSE FROM OPENAI FOR THE FULL SUMMARY BASED ON THE FULL TRANSCRIPT
-      await transcriptService.storeTranscript(meetingId, transcript, summary);
+      await transcriptService.storeTranscript(
+        meetingId,
+        transcript,
+        summary,
+        meetingName,
+        meetingScore
+      );
 
       set({ transcript: "", summary: "" });
       console.log("Meeting saved with ID:", meetingId);

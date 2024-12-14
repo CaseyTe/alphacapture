@@ -5,7 +5,8 @@ import type {
   TranscriptChunk,
   SearchResult,
   TranscriptMetadata,
-} from "./types";
+  MeetingScore,
+} from "../../utils/supabase/types";
 
 export class TranscriptService {
   private checkSupabaseAvailable() {
@@ -19,20 +20,26 @@ export class TranscriptService {
   async storeTranscript(
     meetingId: string,
     transcript: string,
-    summary: string
+    summary: string,
+    meetingName: string,
+    meetingScore: MeetingScore | null
   ): Promise<void> {
     try {
       this.checkSupabaseAvailable();
 
       // Store meeting metadata
-      const metadata: TranscriptMetadata = {
+      const meetingData: TranscriptMetadata = {
         full_transcript: transcript,
-        summary,
+        summary: summary,
+        meeting_name: meetingName,
+        overall: meetingScore?.overall || 0,
+        depth: meetingScore?.depth || 0,
+        on_topic: meetingScore?.on_topic || 0,
+        pace: meetingScore?.pace || 0,
       };
 
-      console.log(await supabase!.from("meetings"));
+      console.log(meetingData);
       const user = await supabase!.auth.getUser();
-      console.log(user);
       if (!user) {
         console.error("User is not authenticated");
         return;
@@ -40,7 +47,7 @@ export class TranscriptService {
 
       const { error: metadataError } = await supabase!
         .from("meetings")
-        .insert([metadata]);
+        .insert([meetingData]);
 
       if (metadataError) throw metadataError;
 

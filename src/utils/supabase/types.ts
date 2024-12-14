@@ -13,8 +13,18 @@ export interface SearchResult {
 }
 
 export interface TranscriptMetadata {
-  id: string;
+  meeting_name: string;
   full_transcript: string;
   summary: string;
-  created_at: string;
+  overall: number;
+  depth: number;
+  on_topic: number;
+  pace: number;
+}
+
+export interface MeetingScore {
+  overall: number;
+  depth: number;
+  on_topic: number;
+  pace: number;
 }
