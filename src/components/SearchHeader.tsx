@@ -43,7 +43,7 @@ export const SearchHeader: React.FC = () => {
             <div
               className="absolute inset-y-0 left-10 flex items-center pointer-events-none text-gray-400"
               style={{
-                transition: userId ? "opacity 1s ease-in-out" : "none",
+                transition: "opacity 1s ease-in-out",
                 opacity,
               }}
             >

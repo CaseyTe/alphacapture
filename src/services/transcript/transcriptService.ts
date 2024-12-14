@@ -26,9 +26,15 @@ export class TranscriptService {
   ): Promise<void> {
     try {
       this.checkSupabaseAvailable();
+      const user = await supabase!.auth.getUser();
+      if (!user) {
+        console.error("User is not authenticated");
+        return;
+      }
 
       // Store meeting metadata
       const meetingData: TranscriptMetadata = {
+        user_id: user.data.user?.id,
         full_transcript: transcript,
         summary: summary,
         meeting_name: meetingName,
@@ -39,11 +45,6 @@ export class TranscriptService {
       };
 
       console.log(meetingData);
-      const user = await supabase!.auth.getUser();
-      if (!user) {
-        console.error("User is not authenticated");
-        return;
-      }
 
       const { error: metadataError } = await supabase!
         .from("meetings")
