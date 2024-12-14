@@ -1,12 +1,18 @@
-import { supabase } from '../../utils/supabase/client';
-import { generateEmbedding } from '../../utils/openai/embeddings';
-import { chunkText, DEFAULT_CHUNK_OPTIONS } from '../../utils/text/textChunker';
-import type { TranscriptChunk, SearchResult, TranscriptMetadata } from './types';
+import { supabase } from "../../utils/supabase/client";
+import { generateEmbedding } from "../../utils/openai/embeddings";
+import { chunkText, DEFAULT_CHUNK_OPTIONS } from "../../utils/text/textChunker";
+import type {
+  TranscriptChunk,
+  SearchResult,
+  TranscriptMetadata,
+} from "./types";
 
 export class TranscriptService {
   private checkSupabaseAvailable() {
     if (!supabase) {
-      throw new Error('Supabase client is not configured. Please check your environment variables.');
+      throw new Error(
+        "Supabase client is not configured. Please check your environment variables."
+      );
     }
   }
 
@@ -26,8 +32,10 @@ export class TranscriptService {
         created_at: new Date().toISOString(),
       };
 
+      console.log("Storing meeting metadata:", metadata);
+
       const { error: metadataError } = await supabase!
-        .from('meetings')
+        .from("meetings")
         .insert(metadata);
 
       if (metadataError) throw metadataError;
@@ -47,33 +55,36 @@ export class TranscriptService {
       const transcriptChunks = await Promise.all(chunkPromises);
 
       const { error: chunksError } = await supabase!
-        .from('transcript_chunks')
+        .from("transcript_chunks")
         .insert(transcriptChunks);
 
       if (chunksError) throw chunksError;
     } catch (error) {
-      console.error('Error storing transcript:', error);
+      console.error("Error storing transcript:", error);
       throw error;
     }
   }
 
-  async searchTranscripts(query: string, limit: number = 5): Promise<SearchResult[]> {
+  async searchTranscripts(
+    query: string,
+    limit: number = 5
+  ): Promise<SearchResult[]> {
     try {
       this.checkSupabaseAvailable();
-      
+
       const queryEmbedding = await generateEmbedding(query);
 
-      const { data, error } = await supabase!.rpc('search_transcripts', {
+      const { data, error } = await supabase!.rpc("search_transcripts", {
         query_embedding: queryEmbedding,
         match_threshold: 0.7,
-        match_count: limit
+        match_count: limit,
       });
 
       if (error) throw error;
 
       return data || [];
     } catch (error) {
-      console.error('Error searching transcripts:', error);
+      console.error("Error searching transcripts:", error);
       throw error;
     }
   }

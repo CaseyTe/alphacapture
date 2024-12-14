@@ -1,13 +1,14 @@
 import { create } from "zustand";
 import { transcriptionService } from "../utils/transcription/TranscriptionService";
 import { TranscriptService } from "../services/transcript/transcriptService";
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 import type { SearchResult } from "../services/transcript/types";
 
 const transcriptService = new TranscriptService();
 
 interface MeetingState {
   isRecording: boolean;
+  isPaused: boolean;
   transcript: string;
   summary: string;
   meetingTopics: string;
@@ -22,6 +23,8 @@ interface MeetingState {
   searchResults: SearchResult[];
   startRecording: () => Promise<void>;
   stopRecording: () => void;
+  pauseRecording: () => void;
+  resumeRecording: () => void;
   appendTranscript: (text: string) => void;
   clearTranscript: () => void;
   updateSummary: (newSummary: string) => void;
@@ -33,6 +36,7 @@ interface MeetingState {
 
 export const useMeetingStore = create<MeetingState>((set, get) => ({
   isRecording: false,
+  isPaused: false,
   transcript: "",
   summary: "",
   meetingTopics: "",
@@ -42,37 +46,76 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
 
   startRecording: async () => {
     try {
-      if (get().isRecording) return;
-      set({ isRecording: true, summary: "" });
+      if (get().isRecording) {
+        console.log("Recording is already in progress.");
+        return;
+      }
+      set({ isRecording: true, isPaused: false, summary: "" });
+      console.log("Recording started.");
       await transcriptionService.startTranscription();
+      console.log("Transcription service started.");
     } catch (error) {
       console.error("Failed to start recording:", error);
+      set({ isRecording: false });
       throw error;
     }
   },
 
   stopRecording: () => {
-    if (!get().isRecording) return;
+    if (!get().isRecording) {
+      console.log("No active recording to stop.");
+      return;
+    }
     transcriptionService.stopTranscription();
-    set({ isRecording: false });
+    set({ isRecording: false, isPaused: false });
+    console.log("Recording stopped.");
+  },
+
+  pauseRecording: () => {
+    if (!get().isRecording || get().isPaused) {
+      console.log("Recording is not active or already paused.");
+      return;
+    }
+    transcriptionService.stopTranscription();
+    set({ isPaused: true });
+    console.log("Recording paused.");
+  },
+
+  resumeRecording: () => {
+    if (!get().isRecording || !get().isPaused) {
+      console.log("Recording is not paused or not active.");
+      return;
+    }
+    transcriptionService.startTranscription();
+    set({ isPaused: false });
+    console.log("Recording resumed.");
   },
 
   appendTranscript: (text: string) => {
     set((state) => ({
       transcript: state.transcript + text,
     }));
+    console.log(
+      "Appended transcript:",
+      text.length,
+      "characters. Total transcript length:",
+      get().transcript.length + text.length
+    );
   },
 
   clearTranscript: () => {
     set({ transcript: "", summary: "" });
+    console.log("Transcript and summary cleared.");
   },
 
   updateSummary: (newSummary: string) => {
     set({ summary: newSummary });
+    console.log("Summary updated.");
   },
 
   updateMeetingTopics: (topics: string) => {
     set({ meetingTopics: topics });
+    console.log("Meeting topics updated.");
   },
 
   updateMeetingScore: (score) => set({ meetingScore: score }),
@@ -81,8 +124,9 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
     try {
       const results = await transcriptService.searchTranscripts(query);
       set({ searchQuery: query, searchResults: results });
+      console.log("Transcripts searched with query:", query);
     } catch (error) {
-      console.error('Error searching transcripts:', error);
+      console.error("Error searching transcripts:", error);
       throw error;
     }
   },
@@ -92,9 +136,11 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
       const { transcript, summary } = get();
       const meetingId = uuidv4();
       await transcriptService.storeTranscript(meetingId, transcript, summary);
+      set({ transcript: "" });
+      console.log("Meeting saved with ID:", meetingId);
       return meetingId;
     } catch (error) {
-      console.error('Error saving meeting:', error);
+      console.error("Error saving meeting:", error);
       throw error;
     }
   },

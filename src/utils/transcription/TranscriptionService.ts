@@ -16,6 +16,8 @@ class TranscriptionService {
   private debugInterval: number | null = null;
   private readonly CHUNK_SIZE = 2048;
   private readonly MAX_BUFFER_SIZE = 50;
+  private isPaused: boolean = false;
+  private transcribeController: AbortController | null = null;
 
   constructor() {
     this.transcribeClient = new TranscribeClient();
@@ -36,6 +38,8 @@ class TranscriptionService {
 
       this.isTranscribing = true;
       this.audioBuffer = [];
+      this.isPaused = false;
+      this.transcribeController = new AbortController();
 
       const workletBlob = new Blob([audioWorkletCode], {
         type: "application/javascript",
@@ -181,10 +185,16 @@ class TranscriptionService {
   stopTranscription(): void {
     console.log("Stopping transcription...");
     this.isTranscribing = false;
+    this.isPaused = false;
 
     if (this.debugInterval) {
       window.clearInterval(this.debugInterval);
       this.debugInterval = null;
+    }
+
+    if (this.transcribeController) {
+      this.transcribeController.abort();
+      this.transcribeController = null;
     }
 
     this.streamManager.stop();

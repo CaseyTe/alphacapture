@@ -32,6 +32,14 @@ export const RecordingControls: React.FC = () => {
     }
   };
 
+  const handlePauseRecording = () => {
+    pauseRecording();
+  };
+
+  const handleResumeRecording = () => {
+    resumeRecording();
+  };
+
   if (!isRecording) {
     return (
       <button
@@ -55,7 +63,7 @@ export const RecordingControls: React.FC = () => {
       </button>
 
       <button
-        onClick={isPaused ? resumeRecording : pauseRecording}
+        onClick={isPaused ? handleResumeRecording : handlePauseRecording}
         className={`flex items-center justify-center px-6 py-3 rounded-lg font-medium transition-colors ${
           isPaused
             ? "bg-green-600 hover:bg-green-700 text-white"
