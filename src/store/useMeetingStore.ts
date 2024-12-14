@@ -17,6 +17,7 @@ export interface MeetingState {
   meetingName: string;
   searchQuery: string;
   searchResults: SearchResult[];
+  notification: { message: string; type: "success" | "error" | "info" } | null;
   startRecording: () => Promise<void>;
   stopRecording: () => void;
   pauseRecording: () => void;
@@ -25,13 +26,12 @@ export interface MeetingState {
   clearTranscript: () => void;
   updateSummary: (newSummary: string) => void;
   updateMeetingTopics: (topics: string) => void;
-  updateMeetingScore: (score: MeetingState["meetingScore"]) => void;
+  updateMeetingScore: (score: MeetingScore | null) => void;
   searchTranscripts: (query: string) => Promise<void>;
   updateMeetingName: (name: string) => void;
   saveMeeting: () => Promise<void>;
   login: (userId: string) => void;
   logout: () => void;
-  notification: { message: string; type: "success" | "error" | "info" } | null;
   showNotification: (
     message: string,
     type: "success" | "error" | "info"
@@ -44,8 +44,8 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
   isPaused: false,
   transcript: "",
   summary: "",
-  userId: null,
   meetingTopics: "",
+  userId: null,
   meetingScore: null,
   meetingName: "",
   searchQuery: "",
@@ -53,18 +53,20 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
   notification: null,
 
   startRecording: async () => {
+    if (get().isRecording) {
+      console.log("Recording is already in progress.");
+      return;
+    }
     try {
-      if (get().isRecording) {
-        console.log("Recording is already in progress.");
-        return;
-      }
       set({ isRecording: true, isPaused: false, summary: "" });
       console.log("Recording started.");
       await transcriptionService.startTranscription();
       console.log("Transcription service started.");
+      get().showNotification("Recording started.", "success");
     } catch (error) {
       console.error("Failed to start recording:", error);
       set({ isRecording: false });
+      get().showNotification("Failed to start recording.", "error");
       throw error;
     }
   },
@@ -75,11 +77,9 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
       return;
     }
     transcriptionService.stopTranscription();
-    set({
-      isRecording: false,
-      isPaused: false,
-    });
-    console.log("Recording stopped and data cleared.");
+    set({ isRecording: false, isPaused: false });
+    console.log("Recording stopped.");
+    get().showNotification("Recording stopped.", "success");
   },
 
   pauseRecording: () => {
@@ -90,6 +90,7 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
     transcriptionService.stopTranscription();
     set({ isPaused: true });
     console.log("Recording paused.");
+    get().showNotification("Recording paused.", "info");
   },
 
   resumeRecording: () => {
@@ -100,21 +101,21 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
     transcriptionService.startTranscription();
     set({ isPaused: false });
     console.log("Recording resumed.");
+    get().showNotification("Recording resumed.", "success");
   },
 
-  appendTranscript: (text: string) => {
-    set((state) => ({
-      transcript: state.transcript + text,
-    }));
+  appendTranscript: (text) => {
+    set((state) => ({ transcript: state.transcript + text }));
     console.log(
-      "Appended transcript:",
-      text.length,
-      "characters. Total transcript length:",
-      get().transcript.length + text.length
+      `Appended transcript: ${
+        text.length
+      } characters. Total transcript length: ${
+        get().transcript.length + text.length
+      }`
     );
   },
 
-  updateMeetingName: (name: string) => {
+  updateMeetingName: (name) => {
     set({ meetingName: name });
     console.log("Meeting name updated.");
   },
@@ -122,27 +123,34 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
   clearTranscript: () => {
     set({ transcript: "", summary: "" });
     console.log("Transcript and summary cleared.");
+    get().showNotification("Transcript and summary cleared.", "info");
   },
 
-  updateSummary: (newSummary: string) => {
+  updateSummary: (newSummary) => {
     set({ summary: newSummary });
     console.log("Summary updated.");
   },
 
-  updateMeetingTopics: (topics: string) => {
+  updateMeetingTopics: (topics) => {
     set({ meetingTopics: topics });
     console.log("Meeting topics updated.");
   },
 
-  updateMeetingScore: (score) => set({ meetingScore: score }),
+  updateMeetingScore: (score) => {
+    set({ meetingScore: score });
+    console.log("Meeting score updated.");
+  },
 
-  searchTranscripts: async (query: string) => {
+  searchTranscripts: async (query) => {
     try {
       const results = await transcriptService.searchTranscripts(query);
+      console.log("Transcripts searched with query:", query);
+      console.log("Results:", results);
       set({ searchQuery: query, searchResults: results });
       console.log("Transcripts searched with query:", query);
     } catch (error) {
       console.error("Error searching transcripts:", error);
+      get().showNotification("Error searching transcripts.", "error");
       throw error;
     }
   },
@@ -151,7 +159,7 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
     try {
       const { transcript, summary, meetingScore, meetingName } = get();
       const meetingId = uuidv4();
-      set({ transcript: "", summary: "" });
+      // TODO: AWAIT A RESPONSE FROM OPENAI FOR THE FULL SUMMARY BASED ON THE FULL TRANSCRIPT
       await transcriptService.storeTranscript(
         meetingId,
         transcript,
@@ -159,24 +167,21 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
         meetingName,
         meetingScore
       );
-      get().showNotification("Meeting saved successfully!", "success");
-      return meetingId;
+
+      set({ transcript: "", summary: "" });
+      console.log("Meeting saved with ID:", meetingId);
+      get().showNotification("Meeting saved successfully.", "success");
+      return;
     } catch (error) {
       console.error("Error saving meeting:", error);
-      get().showNotification("Failed to save meeting", "error");
+      get().showNotification("Error saving meeting.", "error");
       throw error;
     }
   },
 
-  login: (userId: string) => set({ userId }),
-
+  login: (userId) => set({ userId }),
   logout: () => set({ userId: null }),
 
-  showNotification: (message, type) => {
-    set({ notification: { message, type } });
-  },
-
-  clearNotification: () => {
-    set({ notification: null });
-  },
+  showNotification: (message, type) => set({ notification: { message, type } }),
+  clearNotification: () => set({ notification: null }),
 }));

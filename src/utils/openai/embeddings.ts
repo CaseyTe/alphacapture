@@ -10,5 +10,7 @@ export const generateEmbedding = async (text: string): Promise<number[]> => {
     model: "text-embedding-3-small",
     input: text,
   });
-  return response.data[0].embedding;
+  return Array.isArray(response.data[0].embedding)
+    ? response.data[0].embedding
+    : [];
 };

@@ -71,7 +71,7 @@ export class TranscriptService {
       const transcriptChunks = await Promise.all(chunkPromises);
 
       const { error: chunksError } = await supabase!
-        .from("meeting-documents")
+        .from("meeting_documents")
         .insert(transcriptChunks);
 
       if (chunksError) throw chunksError;
@@ -90,11 +90,24 @@ export class TranscriptService {
 
       const queryEmbedding = await generateEmbedding(query);
 
+      const queryEmbeddingCasted = queryEmbedding.map((n) =>
+        Number(n)
+      ) as number[];
+      console.log(
+        "Query embedding:",
+        queryEmbeddingCasted,
+        limit,
+        "Type of queryEmbedding:",
+        typeof queryEmbeddingCasted
+      );
+
       const { data, error } = await supabase!.rpc("search_transcripts", {
-        query_embedding: queryEmbedding,
-        match_threshold: 0.7,
+        query_embedding: queryEmbeddingCasted,
+        match_threshold: 0.0,
         match_count: limit,
       });
+
+      console.log("Search results:", data, error);
 
       if (error) throw error;
 

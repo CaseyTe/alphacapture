@@ -4,6 +4,7 @@ import { LogIn, LogOut } from "lucide-react";
 import { SearchHeader } from "./SearchHeader";
 import { useMeetingStore } from "../store/useMeetingStore";
 import { FileText } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export const Navbar: React.FC = () => {
   const [user, setUser] = useState<any>(null);
@@ -45,7 +46,7 @@ export const Navbar: React.FC = () => {
 
   const handleLogin = async () => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { error } = await supabase!.auth.signInWithOAuth({
         provider: "google",
       });
 
@@ -71,15 +72,15 @@ export const Navbar: React.FC = () => {
   };
 
   return (
-    <nav className="bg-white shadow-md">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <nav className="bg-white shadow-lg">
+      <div className="max-w-7xl mx-auto px-4">
         <div className="flex justify-between h-16">
-          <div className="flex-shrink-0 flex items-center">
-            <span className="ml-2 font-bold text-xl text-indigo-600 flex items-center">
-              <FileText className="h-6 w-6 mr-2 text-indigo-600" />
+          <Link to="/" className="flex items-center space-x-3 cursor-pointer">
+            <FileText className="h-8 w-8 text-indigo-600" />
+            <span className="text-xl font-semibold text-gray-800">
               AlphaCapture
             </span>
-          </div>
+          </Link>
           <div className="flex-1 flex items-center justify-center">
             <SearchHeader />
           </div>

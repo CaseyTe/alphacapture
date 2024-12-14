@@ -1,21 +1,27 @@
-import React, { useState } from 'react';
-import { Search } from 'lucide-react';
-import { useMeetingStore } from '../store/useMeetingStore';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Search } from "lucide-react";
+import { useMeetingStore } from "../store/useMeetingStore";
 
 export const SearchTranscripts: React.FC = () => {
-  const { searchTranscripts, searchResults } = useMeetingStore();
-  const [query, setQuery] = useState('');
+  const { showNotification } = useMeetingStore();
+  const navigate = useNavigate();
+  const [query, setQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!query.trim()) return;
+    if (!query.trim()) {
+      showNotification("Please enter a search query.", "info");
+      return;
+    }
 
     try {
       setIsSearching(true);
-      await searchTranscripts(query);
+      navigate(`/search?q=${encodeURIComponent(query.trim())}`);
     } catch (error) {
-      console.error('Search error:', error);
+      console.error("Search error:", error);
+      showNotification("An error occurred while searching.", "error");
     } finally {
       setIsSearching(false);
     }
@@ -26,7 +32,7 @@ export const SearchTranscripts: React.FC = () => {
       <h2 className="text-lg font-semibold mb-4 text-gray-800">
         Search Previous Meetings
       </h2>
-      
+
       <form onSubmit={handleSearch} className="mb-6">
         <div className="flex gap-2">
           <div className="relative flex-1">
@@ -44,29 +50,10 @@ export const SearchTranscripts: React.FC = () => {
             disabled={isSearching}
             className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50"
           >
-            {isSearching ? 'Searching...' : 'Search'}
+            {isSearching ? "Searching..." : "Search"}
           </button>
         </div>
       </form>
-
-      {searchResults.length > 0 && (
-        <div className="space-y-4">
-          {searchResults.map((result, index) => (
-            <div
-              key={index}
-              className="p-4 bg-gray-50 rounded-lg border border-gray-200"
-            >
-              <p className="text-sm text-gray-600 mb-2">
-                Meeting from {new Date(result.created_at).toLocaleDateString()}
-              </p>
-              <p className="text-gray-800">{result.chunk_text}</p>
-              <p className="text-sm text-gray-500 mt-2">
-                Similarity: {(result.similarity * 100).toFixed(1)}%
-              </p>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
 };
