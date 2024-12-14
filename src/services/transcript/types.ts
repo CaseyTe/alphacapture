@@ -13,8 +13,6 @@ export interface SearchResult {
 }
 
 export interface TranscriptMetadata {
-  id: string;
   full_transcript: string;
   summary: string;
-  created_at: string;
 }

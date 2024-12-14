@@ -135,8 +135,10 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
     try {
       const { transcript, summary } = get();
       const meetingId = uuidv4();
+      // TODO: AWAIT A RESPONSE FROM OPENAI FOR THE FULL SUMMARY BASED ON THE FULL TRANSCRIPT
       await transcriptService.storeTranscript(meetingId, transcript, summary);
-      set({ transcript: "" });
+
+      set({ transcript: "", summary: "" });
       console.log("Meeting saved with ID:", meetingId);
       return meetingId;
     } catch (error) {

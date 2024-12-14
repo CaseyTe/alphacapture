@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Mic, MicOff, Save } from "lucide-react";
 import { useMeetingStore } from "../store/useMeetingStore";
 import { MeetingScore } from "./MeetingScore";
@@ -8,6 +8,7 @@ import { env } from "../config/env";
 import { TopicsInput } from "./TopicsInput";
 import { TranscriptDisplay } from "./TranscriptDisplay";
 import { SummaryDisplay } from "./SummaryDisplay";
+import { useAutoSummary } from "../hooks/useAutoSummary";
 
 export const MeetingRecorder: React.FC = () => {
   const {
@@ -16,20 +17,25 @@ export const MeetingRecorder: React.FC = () => {
     meetingScore,
     startRecording,
     stopRecording,
-    saveMeeting
+    saveMeeting,
   } = useMeetingStore();
-  
+
+  useAutoSummary();
+
   const [isSaving, setIsSaving] = useState(false);
 
-  const canRecord = !!env.VITE_AWS_REGION && 
-                   !!env.VITE_AWS_ACCESS_KEY_ID && 
-                   !!env.VITE_AWS_SECRET_ACCESS_KEY;
+  const canRecord =
+    !!env.VITE_AWS_REGION &&
+    !!env.VITE_AWS_ACCESS_KEY_ID &&
+    !!env.VITE_AWS_SECRET_ACCESS_KEY;
 
-  const canSave = !!env.VITE_SUPABASE_URL && 
-                 !!env.VITE_SUPABASE_ANON_KEY && 
-                 !!env.VITE_OPENAI_API_KEY;
+  const canSave =
+    !!env.VITE_SUPABASE_URL &&
+    !!env.VITE_SUPABASE_ANON_KEY &&
+    !!env.VITE_OPENAI_API_KEY;
 
   const handleStartRecording = async () => {
+    console.log("MeetingRecorder component rendered");
     try {
       await startRecording();
     } catch (error) {
@@ -58,7 +64,7 @@ export const MeetingRecorder: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-8">
       <ConfigurationWarning />
-      
+
       <div className="flex flex-col items-center space-y-4 mb-8">
         <TopicsInput disabled={isRecording} />
 
@@ -71,7 +77,11 @@ export const MeetingRecorder: React.FC = () => {
                 ? "bg-red-600 hover:bg-red-700 text-white"
                 : "bg-indigo-600 hover:bg-indigo-700 text-white"
             } disabled:opacity-50 disabled:cursor-not-allowed`}
-            title={!canRecord ? "AWS configuration required for recording" : undefined}
+            title={
+              !canRecord
+                ? "AWS configuration required for recording"
+                : undefined
+            }
           >
             {isRecording ? (
               <>
@@ -91,10 +101,14 @@ export const MeetingRecorder: React.FC = () => {
               onClick={handleSaveMeeting}
               disabled={isSaving || !canSave}
               className="flex items-center px-6 py-3 rounded-lg font-medium bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
-              title={!canSave ? "Supabase and OpenAI configuration required for saving" : undefined}
+              title={
+                !canSave
+                  ? "Supabase and OpenAI configuration required for saving"
+                  : undefined
+              }
             >
               <Save className="w-5 h-5 mr-2" />
-              {isSaving ? 'Saving...' : 'Save Meeting'}
+              {isSaving ? "Saving..." : "Save Meeting"}
             </button>
           )}
         </div>

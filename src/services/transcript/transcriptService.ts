@@ -26,17 +26,21 @@ export class TranscriptService {
 
       // Store meeting metadata
       const metadata: TranscriptMetadata = {
-        id: meetingId,
         full_transcript: transcript,
         summary,
-        created_at: new Date().toISOString(),
       };
 
-      console.log("Storing meeting metadata:", metadata);
+      console.log(await supabase!.from("meetings"));
+      const user = await supabase!.auth.getUser();
+      console.log(user);
+      if (!user) {
+        console.error("User is not authenticated");
+        return;
+      }
 
       const { error: metadataError } = await supabase!
         .from("meetings")
-        .insert(metadata);
+        .insert([metadata]);
 
       if (metadataError) throw metadataError;
 

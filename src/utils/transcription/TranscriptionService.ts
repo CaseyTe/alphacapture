@@ -55,18 +55,12 @@ class TranscriptionService {
         workletNode.port.onmessage = (event) => {
           if (this.isTranscribing && event.data) {
             const audioData = new Float32Array(event.data);
-            console.log("Received audio data chunk:", audioData.length);
             if (this.audioBuffer.length < this.MAX_BUFFER_SIZE) {
               this.audioBuffer.push(audioData);
-              console.log(
-                "Audio buffer size after push:",
-                this.audioBuffer.length
-              );
             }
           }
         };
 
-        console.log("Initializing AWS client...");
         await this.transcribeClient.initialize(
           import.meta.env.VITE_AWS_REGION,
           {
@@ -75,9 +69,7 @@ class TranscriptionService {
           }
         );
 
-        console.log("Starting transcription stream...");
         const command = createTranscriptionCommand(this.createAudioStream());
-        console.log("Sending transcription command to AWS...");
         const response = await this.transcribeClient.startTranscription(
           command
         );
@@ -88,33 +80,25 @@ class TranscriptionService {
 
         this.startDebugInterval();
 
-        console.log("Processing transcription stream...");
         try {
           for await (const event of response.TranscriptResultStream) {
             if (!this.isTranscribing) break;
-
-            console.log("Received event from AWS:", event);
 
             if (event.TranscriptEvent?.Transcript?.Results?.[0]) {
               const result = event.TranscriptEvent.Transcript.Results[0];
               if (result.Alternatives?.[0]?.Transcript) {
                 const transcription = result.Alternatives[0].Transcript;
                 if (!result.IsPartial) {
-                  console.log("Received final transcription:", transcription);
                   useMeetingStore
                     .getState()
                     .appendTranscript(transcription + " ");
                 } else {
-                  console.log("Received partial transcription:", transcription);
                 }
               }
             }
           }
         } catch (error) {
-          console.error("Error processing transcription stream:", error);
           if (error instanceof Error) {
-            console.error("Error details:", error.message);
-            console.error("Error stack:", error.stack);
           }
           throw error;
         }
@@ -122,7 +106,6 @@ class TranscriptionService {
         URL.revokeObjectURL(workletUrl);
       }
     } catch (error) {
-      console.error("Transcription error:", error);
       this.stopTranscription();
       throw error;
     }
@@ -150,10 +133,6 @@ class TranscriptionService {
         // Process the combined chunk
         const processedChunk =
           this.audioProcessor.processAudioChunk(combinedChunk);
-        console.log(
-          "Sending processed audio chunk of size:",
-          processedChunk.length
-        );
 
         yield {
           AudioEvent: {
@@ -183,7 +162,6 @@ class TranscriptionService {
   }
 
   stopTranscription(): void {
-    console.log("Stopping transcription...");
     this.isTranscribing = false;
     this.isPaused = false;
 
@@ -201,7 +179,6 @@ class TranscriptionService {
     this.audioContext.close();
     this.transcribeClient.destroy();
     this.audioBuffer = [];
-    console.log("Transcription stopped and cleaned up");
   }
 }
 

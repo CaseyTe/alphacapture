@@ -1,6 +1,7 @@
 import React from "react";
 import { Mic, Pause, Play, Square, Save } from "lucide-react";
 import { useMeetingStore } from "../store/useMeetingStore";
+import { useAutoSummary } from "../hooks/useAutoSummary";
 
 export const RecordingControls: React.FC = () => {
   const {
@@ -13,6 +14,8 @@ export const RecordingControls: React.FC = () => {
     resumeRecording,
     saveMeeting,
   } = useMeetingStore();
+
+  useAutoSummary();
 
   const handleStartRecording = async () => {
     try {
