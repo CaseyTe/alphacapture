@@ -35,6 +35,7 @@ export class TranscriptService {
 
       // Store meeting metadata
       const meetingData: TranscriptMetadata = {
+        meeting_id: meetingId,
         user_id: user.data.user?.id,
         full_transcript: transcript,
         summary: summary,
@@ -70,7 +71,7 @@ export class TranscriptService {
       const transcriptChunks = await Promise.all(chunkPromises);
 
       const { error: chunksError } = await supabase!
-        .from("meeting_documents")
+        .from("meeting-documents")
         .insert(transcriptChunks);
 
       if (chunksError) throw chunksError;

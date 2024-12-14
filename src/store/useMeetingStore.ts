@@ -151,6 +151,7 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
     try {
       const { transcript, summary, meetingScore, meetingName } = get();
       const meetingId = uuidv4();
+      set({ transcript: "", summary: "" });
       await transcriptService.storeTranscript(
         meetingId,
         transcript,
@@ -159,7 +160,6 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
         meetingScore
       );
       get().showNotification("Meeting saved successfully!", "success");
-      set({ transcript: "", summary: "" });
       return meetingId;
     } catch (error) {
       console.error("Error saving meeting:", error);

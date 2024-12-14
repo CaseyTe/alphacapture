@@ -13,6 +13,7 @@ export interface SearchResult {
 }
 
 export interface TranscriptMetadata {
+  meeting_id: string;
   user_id: string | undefined;
   meeting_name: string;
   full_transcript: string;
